@@ -125,7 +125,9 @@ class DosenLoginController extends Controller
      */
     public function destroy($id)
     {
-        $data = DosenLogin::findOrFail($id);
+        $data = DosenLogin::where('user_id', $id)->first();
+        // delete data user
+        User::destroy($id);
         // delete data
         $data->delete();
 

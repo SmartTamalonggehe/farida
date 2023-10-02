@@ -18,6 +18,7 @@ class UserSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@fstuogp.com',
             'password' => Hash::make('admin'),
+            'show_password' => '12345',
             'role' => 'admin',
         ]);
     }

@@ -169,6 +169,9 @@ class DosenController extends Controller
      */
     public function destroy($id)
     {
+        // delete data dosenlogin
+        $this->dosenLogin->destroy($id);
+        // delete data dosen
         $data = Dosen::findOrFail($id);
         $foto = $data->foto;
         // remove foto foto
