@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Prodi;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,8 +17,19 @@ class DosenFactory extends Factory
      */
     public function definition(): array
     {
+        // random prodi_id
+        $prodi_id = Prodi::inRandomOrder()->first()->id;
         return [
-            //
+            "prodi_id" => $prodi_id,
+            "nama" => $this->faker->name(),
+            "jabatan" => $this->faker->jobTitle(),
+            "tempat_lahir" => $this->faker->city(),
+            "tgl_lahir" => $this->faker->date(),
+            "jenkel" => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
+            "agama" => $this->faker->randomElement(['Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha']),
+            "alamat" => $this->faker->address(),
+            "no_hp" => $this->faker->phoneNumber(),
+            "foto" => "",
         ];
     }
 }

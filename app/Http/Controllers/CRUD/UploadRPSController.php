@@ -2,26 +2,23 @@
 
 namespace App\Http\Controllers\CRUD;
 
-use App\Models\Dosen;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CrudResource;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\TOOLS\ImgToolsController;
-use App\Http\Controllers\CRUD\DosenLoginController;
+use App\Models\Jadwal;
+use App\Models\UploadRps;
 
-class DosenController extends Controller
+class UploadRPSController extends Controller
 {
     public $imgController;
-    public $dosenLogin;
 
     public function __construct()
     {
         // memanggil controller image
         $this->imgController = new ImgToolsController();
-        // memanggil controller dosen login
-        $this->dosenLogin = new DosenLoginController();
     }
     protected function spartaValidation($request, $id = "")
     {
@@ -30,11 +27,12 @@ class DosenController extends Controller
             $required = "required";
         }
         $rules = [
-            'nama' => 'required',
+            'jadwal_id' => 'required|unique:upload_rps,jadwal_id,' . $id,
         ];
 
         $messages = [
-            'nama.required' => 'Nama dosen harus diisi.',
+            'jadwal_id.required' => 'Jadwal harus diisi.',
+            'jadwal_id.unique' => 'Matakuliah pada jadwal ini sudah ada.',
         ];
         $validator = Validator::make($request, $rules, $messages);
 
@@ -52,13 +50,12 @@ class DosenController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    // untuk admin
     public function index(Request $request)
     {
         $search = $request->search;
-        $data = Dosen::where('nama', 'like', "%$search%")
-            ->orderBy('nama', 'asc')
-            ->paginate(10);
-        return new CrudResource('success', 'Data Dosen', $data);
+        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->paginate(10);
+        return new CrudResource('success', 'Data UploadRps', $data);
     }
     /**
      * Show the form for creating a new resource.
@@ -84,18 +81,13 @@ class DosenController extends Controller
         if ($validate) {
             return $validate;
         }
-        // export foto
-        if ($request->hasFile('foto')) {
-            $foto = $this->imgController->addImage('foto_dosen', $data_req['foto']);
-            $data_req['foto'] = "storage/$foto";
+        // export file
+        if ($request->hasFile('file')) {
+            $file = $this->imgController->addImage('FileRps', $data_req['file']);
+            $data_req['file'] = "storage/$file";
         }
-        // make id dosen form time
-        $data_req['id'] = time();
-        Dosen::create($data_req);
-        $data = Dosen::latest()->first();
-        // menyimpan data login dosen
-        $this->dosenLogin->store($data_req);
-
+        UploadRps::create($data_req);
+        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->latest()->first();
         return new CrudResource('success', 'Data Berhasil Disimpan', $data);
     }
 
@@ -105,9 +97,12 @@ class DosenController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    // untuk dosen
     public function show($id)
     {
-        return $this->dosenLogin->show($id);
+        $jadwal_id = Jadwal::where('dosen_id', $id)->pluck('id');
+        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->whereIn('jadwal_id', $jadwal_id)->get();
+        return new CrudResource('success', 'Data UploadRps', $data);
     }
 
     /**
@@ -134,29 +129,29 @@ class DosenController extends Controller
         // remove _method from data_req
         unset($data_req['_method']);
         // return $data_req;
-        $validate = $this->spartaValidation($data_req);
+        $validate = $this->spartaValidation($data_req, $id);
         if ($validate) {
             return $validate;
         }
 
-        $data = Dosen::findOrFail($id);
-        // find file foto
-        $foto = $data->foto;
-        // export foto
-        if ($request->hasFile('foto')) {
-            // remove file foto jika ada
-            if ($foto) {
-                File::delete($foto);
+        $data = UploadRps::findOrFail($id);
+        // find file file
+        $file = $data->file;
+        // export file
+        if ($request->hasFile('file')) {
+            // remove file file jika ada
+            if ($file) {
+                File::delete($file);
             }
-            $foto = $this->imgController->addImage('foto_dosen', $data_req['foto']);
-            $data_req['foto'] = "storage/$foto";
+            $file = $this->imgController->addImage('FileRps', $data_req['file']);
+            $data_req['file'] = "storage/$file";
         } else {
-            $data_req['foto'] = $foto;
+            $data_req['file'] = $file;
         }
 
         $data->update($data_req);
 
-        $data = Dosen::find($id);
+        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->find($id);
 
         return new CrudResource('success', 'Data Berhasil Diubah', $data);
     }
@@ -169,14 +164,12 @@ class DosenController extends Controller
      */
     public function destroy($id)
     {
-        // delete data dosenlogin
-        $this->dosenLogin->destroy($id);
-        // delete data dosen
-        $data = Dosen::findOrFail($id);
-        $foto = $data->foto;
-        // remove foto foto
-        if ($foto) {
-            File::delete($foto);
+        // delete data uploadRps
+        $data = UploadRps::findOrFail($id);
+        $file = $data->file;
+        // remove file file
+        if ($file) {
+            File::delete($file);
         }
         // delete data
         $data->delete();

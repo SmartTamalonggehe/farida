@@ -16,8 +16,13 @@ class DosenLoginFactory extends Factory
      */
     public function definition(): array
     {
+        // call dosen factory
+        $dosen_factory = new DosenFactory();
+        // call user factory
+        $userFactory = new UserFactory();
         return [
-            //
+            "dosen_id" => $dosen_factory->create()->id,
+            "user_id" => $userFactory->create()->id
         ];
     }
 }

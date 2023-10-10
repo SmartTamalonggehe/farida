@@ -41,5 +41,6 @@ Route::prefix('dosen')->group(function () {
 });
 Route::prefix('jadwal')->group(function () {
     Route::get('/', [JadwalAPI::class, 'index']);
-    Route::get('/thn-smt', [JadwalAPI::class, 'byThnSmt'])->name('jadwal.byThnSmt');
+    Route::get('/thn-smt', [JadwalAPI::class, 'byThnSmt']);
+    Route::get('/by-dosen', [JadwalAPI::class, 'byDosen']);
 });

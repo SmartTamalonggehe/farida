@@ -6,7 +6,7 @@ use App\Http\Controllers\CRUD\JadwalController;
 use App\Http\Controllers\CRUD\MatkulController;
 use App\Http\Controllers\CRUD\MhsController;
 use App\Http\Controllers\CRUD\RuanganController;
-
+use App\Http\Controllers\CRUD\UploadRPSController;
 
 Route::middleware(['jwt_costume', 'ip_throttle'])->group(function () {
     Route::resource('ruangan', RuanganController::class);
@@ -14,4 +14,7 @@ Route::middleware(['jwt_costume', 'ip_throttle'])->group(function () {
     Route::resource('dosen', DosenController::class);
     Route::resource('jadwal', JadwalController::class);
     Route::resource('mhs', MhsController::class);
+    Route::prefix('upload')->group(function () {
+        Route::resource('rps', UploadRPSController::class);
+    });
 });

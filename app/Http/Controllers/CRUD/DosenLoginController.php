@@ -86,7 +86,7 @@ class DosenLoginController extends Controller
      */
     public function show($id)
     {
-        $data = DosenLogin::find($id);
+        $data = User::find($id);
         return new CrudResource('success', 'Data Berhasil Ditemukan', $data);
     }
 

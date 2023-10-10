@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserToken extends Model
+class UploadAbsen extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $table = 'upload_absen';
 
-    function user()
+    function jadwal()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Jadwal::class, 'jadwal_id');
     }
 }

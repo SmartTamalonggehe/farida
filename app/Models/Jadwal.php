@@ -30,4 +30,9 @@ class Jadwal extends Model
     {
         return $this->belongsTo(Prodi::class);
     }
+
+    function uploadRps()
+    {
+        return $this->hasOne(UploadRps::class, 'jadwal_id', 'id');
+    }
 }
