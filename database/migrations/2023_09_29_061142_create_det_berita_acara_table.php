@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('berita_acara_id')->constrained('berita_acara')->cascadeOnDelete()->cascadeOnUpdate();
             $table->date('tgl');
             $table->string('materi');
-            $table->string('jmlh_mhs');
+            $table->integer('jmlh_mhs');
+            $table->string('foto');
             $table->timestamps();
         });
     }

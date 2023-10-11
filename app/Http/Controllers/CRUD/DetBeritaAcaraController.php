@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\CRUD;
 
 use Illuminate\Http\Request;
+use App\Models\DetBeritaAcara;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CrudResource;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\TOOLS\ImgToolsController;
 use App\Models\BeritaAcara;
-use App\Models\Jadwal;
-use App\Models\UploadRps;
 
-class UploadRPSController extends Controller
+class DetBeritaAcaraController extends Controller
 {
     public $imgController;
 
@@ -28,12 +27,11 @@ class UploadRPSController extends Controller
             $required = "required";
         }
         $rules = [
-            'jadwal_id' => 'required|unique:upload_rps,jadwal_id,' . $id,
+            'berita_acara_id' => 'required',
         ];
 
         $messages = [
-            'jadwal_id.required' => 'Jadwal harus diisi.',
-            'jadwal_id.unique' => 'Matakuliah pada jadwal ini sudah ada.',
+            'berita_acara_id.required' => 'Berita acara harus diisi.',
         ];
         $validator = Validator::make($request, $rules, $messages);
 
@@ -51,29 +49,13 @@ class UploadRPSController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    // untuk admin
     public function index(Request $request)
     {
         $search = $request->search;
-        $limit = $request->limit;
-        $semester = $request->semester;
-        $tahun = $request->tahun;
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan', 'jadwal.prodi', 'jadwal.dosen'])
-            ->whereHas('jadwal', function ($query) use ($search, $semester, $tahun) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('hari', 'like', "%$search%")
-                        ->orWhereHas('matkul', function ($mhs) use ($search) {
-                            $mhs->where('nama', 'like', "%$search%")
-                                ->orWhere('singkat', 'like', "%$search%");
-                        });
-                })
-                    ->where([
-                        ['semester', $semester],
-                        ['tahun', $tahun],
-                    ]);
-            })
-            ->paginate($limit);
-        return new CrudResource('success', 'Data UploadRps', $data);
+        $data = DetBeritaAcara::where('materi', 'like', "%$search%")
+            ->orderBy('tgl', 'desc')
+            ->paginate(10);
+        return new CrudResource('success', 'Data DetBeritaAcara', $data);
     }
     /**
      * Show the form for creating a new resource.
@@ -99,13 +81,15 @@ class UploadRPSController extends Controller
         if ($validate) {
             return $validate;
         }
-        // export file
-        if ($request->hasFile('file')) {
-            $file = $this->imgController->addImage('FileRps', $data_req['file']);
-            $data_req['file'] = "storage/$file";
+        // export foto
+        if ($request->hasFile('foto')) {
+            $foto = $this->imgController->addImage('foto_detBeritaAcara', $data_req['foto']);
+            $data_req['foto'] = "storage/$foto";
         }
-        UploadRps::create($data_req);
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->latest()->first();
+
+        DetBeritaAcara::create($data_req);
+        $data = DetBeritaAcara::latest()->first();
+
         return new CrudResource('success', 'Data Berhasil Disimpan', $data);
     }
 
@@ -115,12 +99,11 @@ class UploadRPSController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    // untuk dosen
     public function show($id)
     {
-        $jadwal_id = Jadwal::where('dosen_id', $id)->pluck('id');
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->whereIn('jadwal_id', $jadwal_id)->get();
-        return new CrudResource('success', 'Data UploadRps', $data);
+        $data = BeritaAcara::with(['jadwal.matkul', "jadwal.dosen", "jadwal.ruangan", "jadwal.prodi"])->findOrFail($id);
+
+        return new CrudResource('success', 'Data Berhasil Ditemukan', $data);
     }
 
     /**
@@ -147,39 +130,30 @@ class UploadRPSController extends Controller
         // remove _method from data_req
         unset($data_req['_method']);
         // return $data_req;
-        $validate = $this->spartaValidation($data_req, $id);
+        $validate = $this->spartaValidation($data_req);
         if ($validate) {
             return $validate;
         }
 
-        $data = UploadRps::findOrFail($id);
-        // find file file
-        $file = $data->file;
-        // export file
-        if ($request->hasFile('file')) {
-            // remove file file jika ada
-            if ($file) {
-                File::delete($file);
+        $data = DetBeritaAcara::findOrFail($id);
+        // find file foto
+        $foto = $data->foto;
+        // export foto
+        if ($request->hasFile('foto')) {
+            // remove file foto jika ada
+            if ($foto) {
+                File::delete($foto);
             }
-            $file = $this->imgController->addImage('FileRps', $data_req['file']);
-            $data_req['file'] = "storage/$file";
+            $foto = $this->imgController->addImage('foto_detBeritaAcara', $data_req['foto']);
+            $data_req['foto'] = "storage/$foto";
         } else {
-            $data_req['file'] = $file;
+            $data_req['foto'] = $foto;
         }
 
         $data->update($data_req);
 
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->find($id);
-        // jika status diterima
-        if ($data->status == 'diterima') {
-            // create berita acara
-            BeritaAcara::create([
-                'jadwal_id' => $data->jadwal_id,
-            ]);
-        } else {
-            // delete berita acara
-            BeritaAcara::where('jadwal_id', $data->jadwal_id)->delete();
-        }
+        $data = DetBeritaAcara::find($id);
+
         return new CrudResource('success', 'Data Berhasil Diubah', $data);
     }
 
@@ -191,12 +165,12 @@ class UploadRPSController extends Controller
      */
     public function destroy($id)
     {
-        // delete data uploadRps
-        $data = UploadRps::findOrFail($id);
-        $file = $data->file;
-        // remove file file
-        if ($file) {
-            File::delete($file);
+        // delete data detBeritaAcara
+        $data = DetBeritaAcara::findOrFail($id);
+        $foto = $data->foto;
+        // remove foto foto
+        if ($foto) {
+            File::delete($foto);
         }
         // delete data
         $data->delete();

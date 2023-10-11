@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers\CRUD;
 
+use App\Models\UploadAbsen;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CrudResource;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\TOOLS\ImgToolsController;
-use App\Models\BeritaAcara;
-use App\Models\Jadwal;
-use App\Models\UploadRps;
 
-class UploadRPSController extends Controller
+class UploadAbsenController extends Controller
 {
     public $imgController;
 
@@ -21,6 +19,7 @@ class UploadRPSController extends Controller
         // memanggil controller image
         $this->imgController = new ImgToolsController();
     }
+
     protected function spartaValidation($request, $id = "")
     {
         $required = "";
@@ -28,7 +27,7 @@ class UploadRPSController extends Controller
             $required = "required";
         }
         $rules = [
-            'jadwal_id' => 'required|unique:upload_rps,jadwal_id,' . $id,
+            'jadwal_id' => 'required|unique:upload_absen,jadwal_id,' . $id,
         ];
 
         $messages = [
@@ -51,29 +50,21 @@ class UploadRPSController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    // untuk admin
     public function index(Request $request)
     {
         $search = $request->search;
-        $limit = $request->limit;
-        $semester = $request->semester;
-        $tahun = $request->tahun;
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan', 'jadwal.prodi', 'jadwal.dosen'])
-            ->whereHas('jadwal', function ($query) use ($search, $semester, $tahun) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('hari', 'like', "%$search%")
-                        ->orWhereHas('matkul', function ($mhs) use ($search) {
-                            $mhs->where('nama', 'like', "%$search%")
-                                ->orWhere('singkat', 'like', "%$search%");
-                        });
-                })
-                    ->where([
-                        ['semester', $semester],
-                        ['tahun', $tahun],
-                    ]);
+        $dosen_id = $request->dosen_id;
+        $data = UploadAbsen::with(['jadwal.matkul', 'jadwal.ruangan', 'jadwal.prodi', 'jadwal.dosen'])
+            ->whereHas('jadwal', function ($query) use ($search, $dosen_id) {
+                $query->where('dosen_id', "like", "%$dosen_id%")
+                    ->where('hari', 'like', "%$search%")
+                    ->orWhereHas('matkul', function ($matkul) use ($search) {
+                        $matkul->where('nama', 'like', "%$search%")
+                            ->orWhere('singkat', 'like', "%$search%");
+                    });
             })
-            ->paginate($limit);
-        return new CrudResource('success', 'Data UploadRps', $data);
+            ->paginate(10);
+        return new CrudResource('success', 'Data UploadAbsen', $data);
     }
     /**
      * Show the form for creating a new resource.
@@ -101,11 +92,14 @@ class UploadRPSController extends Controller
         }
         // export file
         if ($request->hasFile('file')) {
-            $file = $this->imgController->addImage('FileRps', $data_req['file']);
+            $file = $this->imgController->addImage('file_absen', $data_req['file']);
             $data_req['file'] = "storage/$file";
         }
-        UploadRps::create($data_req);
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->latest()->first();
+
+        UploadAbsen::create($data_req);
+        $data = UploadAbsen::with(['jadwal.matkul', 'jadwal.ruangan', 'jadwal.prodi', 'jadwal.dosen'])
+            ->latest()->first();
+
         return new CrudResource('success', 'Data Berhasil Disimpan', $data);
     }
 
@@ -115,12 +109,9 @@ class UploadRPSController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    // untuk dosen
     public function show($id)
     {
-        $jadwal_id = Jadwal::where('dosen_id', $id)->pluck('id');
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->whereIn('jadwal_id', $jadwal_id)->get();
-        return new CrudResource('success', 'Data UploadRps', $data);
+        // return $id;
     }
 
     /**
@@ -152,7 +143,7 @@ class UploadRPSController extends Controller
             return $validate;
         }
 
-        $data = UploadRps::findOrFail($id);
+        $data = UploadAbsen::findOrFail($id);
         // find file file
         $file = $data->file;
         // export file
@@ -161,7 +152,7 @@ class UploadRPSController extends Controller
             if ($file) {
                 File::delete($file);
             }
-            $file = $this->imgController->addImage('FileRps', $data_req['file']);
+            $file = $this->imgController->addImage('file_absen', $data_req['file']);
             $data_req['file'] = "storage/$file";
         } else {
             $data_req['file'] = $file;
@@ -169,17 +160,8 @@ class UploadRPSController extends Controller
 
         $data->update($data_req);
 
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->find($id);
-        // jika status diterima
-        if ($data->status == 'diterima') {
-            // create berita acara
-            BeritaAcara::create([
-                'jadwal_id' => $data->jadwal_id,
-            ]);
-        } else {
-            // delete berita acara
-            BeritaAcara::where('jadwal_id', $data->jadwal_id)->delete();
-        }
+        $data = UploadAbsen::with(['jadwal.matkul', 'jadwal.ruangan', 'jadwal.prodi', 'jadwal.dosen'])->find($id);
+
         return new CrudResource('success', 'Data Berhasil Diubah', $data);
     }
 
@@ -191,8 +173,8 @@ class UploadRPSController extends Controller
      */
     public function destroy($id)
     {
-        // delete data uploadRps
-        $data = UploadRps::findOrFail($id);
+        // delete data uploadAbsen
+        $data = UploadAbsen::findOrFail($id);
         $file = $data->file;
         // remove file file
         if ($file) {

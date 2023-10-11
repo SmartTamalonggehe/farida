@@ -1,12 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CRUD\MhsController;
 use App\Http\Controllers\CRUD\DosenController;
 use App\Http\Controllers\CRUD\JadwalController;
 use App\Http\Controllers\CRUD\MatkulController;
-use App\Http\Controllers\CRUD\MhsController;
 use App\Http\Controllers\CRUD\RuanganController;
 use App\Http\Controllers\CRUD\UploadRPSController;
+use App\Http\Controllers\CRUD\UploadAbsenController;
+use App\Http\Controllers\CRUD\DetBeritaAcaraController;
 
 Route::middleware(['jwt_costume', 'ip_throttle'])->group(function () {
     Route::resource('ruangan', RuanganController::class);
@@ -16,5 +18,7 @@ Route::middleware(['jwt_costume', 'ip_throttle'])->group(function () {
     Route::resource('mhs', MhsController::class);
     Route::prefix('upload')->group(function () {
         Route::resource('rps', UploadRPSController::class);
+        Route::resource('absen', UploadAbsenController::class);
     });
+    Route::resource('det-berita-acara', DetBeritaAcaraController::class);
 });
