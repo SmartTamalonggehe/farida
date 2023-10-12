@@ -3,10 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DosenAPI;
-use App\Http\Controllers\API\JadwalAPI;
 use App\Http\Controllers\API\ProdiAPI;
+use App\Http\Controllers\API\JadwalAPI;
 use App\Http\Controllers\API\MatkulAPI;
 use App\Http\Controllers\API\RuanganAPI;
+use App\Http\Controllers\API\BeritaAcaraAPI;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,4 +45,7 @@ Route::prefix('jadwal')->group(function () {
     Route::get('/thn-smt', [JadwalAPI::class, 'byThnSmt']);
     Route::get('/by-dosen', [JadwalAPI::class, 'byDosen']);
     Route::get('/by-rps', [JadwalAPI::class, 'byRps']);
+});
+Route::prefix('berita-acara')->group(function () {
+    Route::get('/by-dosen', [BeritaAcaraAPI::class, 'byDosen']);
 });

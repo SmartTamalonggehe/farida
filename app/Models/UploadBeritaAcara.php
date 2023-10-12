@@ -11,8 +11,8 @@ class UploadBeritaAcara extends Model
 
     protected $table = 'upload_berita_acara';
 
-    function jadwal()
+    function beritaAcara()
     {
-        return $this->belongsTo(Jadwal::class, 'jadwal_id');
+        return $this->hasOne(BeritaAcara::class, 'id', 'berita_acara_id');
     }
 }

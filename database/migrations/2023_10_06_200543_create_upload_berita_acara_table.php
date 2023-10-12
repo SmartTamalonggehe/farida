@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('upload_berita_acara', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('jadwal_id')->constrained('jadwal')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('berita_acara_id')->constrained('berita_acara')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('file');
             $table->timestamps();
         });
