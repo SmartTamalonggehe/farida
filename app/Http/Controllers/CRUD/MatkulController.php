@@ -44,7 +44,13 @@ class MatkulController extends Controller
     {
         $search = $request->search;
         $limit = $request->limit;
-        $data = Matkul::with('prodi')->where('nama', 'like', "%$search%")
+        $data = Matkul::with('prodi')->where(function ($query) use ($search) {
+            $query->where('nama', 'like', "%$search%")
+                ->orWhereHas('prodi', function ($prodi) use ($search) {
+                    $prodi->where('nama', 'like', "%$search%");
+                });
+        })
+            ->orderBy('prodi_id', 'asc')
             ->orderBy('semester', 'asc')
             ->orderBy('nama', 'asc')
             ->paginate($limit);

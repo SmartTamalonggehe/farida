@@ -55,7 +55,14 @@ class DosenController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
-        $data = Dosen::where('nama', 'like', "%$search%")
+        $data = Dosen::with('prodi')
+            ->where(function ($query) use ($search) {
+                $query->where('nama', 'like', "%$search%")
+                    ->orWhere('NIDN', 'like', "%$search%")
+                    ->orWhereHas('prodi', function ($prodi) use ($search) {
+                        $prodi->where('nama', 'like', "%$search%");
+                    });
+            })
             ->orderBy('nama', 'asc')
             ->paginate(10);
         return new CrudResource('success', 'Data Dosen', $data);
@@ -92,7 +99,7 @@ class DosenController extends Controller
         // make id dosen form time
         $data_req['id'] = time();
         Dosen::create($data_req);
-        $data = Dosen::latest()->first();
+        $data = Dosen::with(['prodi'])->latest()->first();
         // menyimpan data login dosen
         $this->dosenLogin->store($data_req);
 
