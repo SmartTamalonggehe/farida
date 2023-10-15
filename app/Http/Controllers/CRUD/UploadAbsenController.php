@@ -54,14 +54,21 @@ class UploadAbsenController extends Controller
     {
         $search = $request->search;
         $dosen_id = $request->dosen_id;
+        $semester = $request->semester;
+        $tahun = $request->tahun;
         $data = UploadAbsen::with(['jadwal.matkul', 'jadwal.ruangan', 'jadwal.prodi', 'jadwal.dosen'])
-            ->whereHas('jadwal', function ($query) use ($search, $dosen_id) {
-                $query->where('dosen_id', "like", "%$dosen_id%")
-                    ->where('hari', 'like', "%$search%")
-                    ->orWhereHas('matkul', function ($matkul) use ($search) {
-                        $matkul->where('nama', 'like', "%$search%")
-                            ->orWhere('singkat', 'like', "%$search%");
-                    });
+            ->whereHas('jadwal', function ($jadwal) use ($search, $dosen_id, $semester, $tahun) {
+                $jadwal->where([
+                    ['semester', $semester],
+                    ['tahun', $tahun],
+                    ['dosen_id', "like", "%$dosen_id%"],
+                ])->where(function ($query) use ($search) {
+                    $query->where('hari', 'like', "%$search%")
+                        ->orWhereHas('matkul', function ($mhs) use ($search) {
+                            $mhs->where('nama', 'like', "%$search%")
+                                ->orWhere('singkat', 'like', "%$search%");
+                        });
+                });
             })
             ->paginate(10);
         return new CrudResource('success', 'Data UploadAbsen', $data);
