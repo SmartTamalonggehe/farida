@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PDF\BeritaAcaraController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+Route::prefix('pdf')->group(function () {
+    Route::get('berita-acara/{id}', [BeritaAcaraController::class, 'index'])->name('pdf.berita-acara');
 });
