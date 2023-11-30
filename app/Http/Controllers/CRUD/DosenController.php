@@ -176,6 +176,7 @@ class DosenController extends Controller
             }
             $data->update($data_req);
             $data = Dosen::find($id);
+            DB::commit();
             return new CrudResource('success', 'Data Berhasil Diubah', $data);
         } catch (\Throwable $th) {
             // jika terdapat kesalahan

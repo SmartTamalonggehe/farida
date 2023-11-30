@@ -146,7 +146,7 @@ class DosenLoginController extends Controller
         if (!$data) {
             return new CrudResource('error', 'Data Tidak Ditemukan', $data);
         }
-        DB::transaction();
+        DB::beginTransaction();
         try {
             // delete user token
             UserToken::where('user_id', $id)->delete();
