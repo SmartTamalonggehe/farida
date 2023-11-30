@@ -4,6 +4,7 @@ namespace App\Http\Controllers\CRUD;
 
 use App\Models\Dosen;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CrudResource;
 use Illuminate\Support\Facades\File;
@@ -91,19 +92,31 @@ class DosenController extends Controller
         if ($validate) {
             return $validate;
         }
-        // export foto
-        if ($request->hasFile('foto')) {
-            $foto = $this->imgController->addImage('foto_dosen', $data_req['foto']);
-            $data_req['foto'] = "storage/$foto";
+        DB::beginTransaction();
+        try {
+            // export foto
+            if ($request->hasFile('foto')) {
+                $foto = $this->imgController->addImage('foto_dosen', $data_req['foto']);
+                $data_req['foto'] = "storage/$foto";
+            }
+            // make id dosen form time
+            $data_req['id'] = time();
+            Dosen::create($data_req);
+            $data = Dosen::with(['prodi'])->latest()->first();
+            // menyimpan data login dosen
+            $this->dosenLogin->store($data_req);
+            DB::commit();
+            return new CrudResource('success', 'Data Berhasil Disimpan', $data);
+        } catch (\Throwable $th) {
+            // jika terdapat kesalahan
+            DB::rollback();
+            $message = [
+                'judul' => 'Gagal',
+                'type' => 'error',
+                'message' => $th->getMessage(),
+            ];
+            return response()->json($message, 400);
         }
-        // make id dosen form time
-        $data_req['id'] = time();
-        Dosen::create($data_req);
-        $data = Dosen::with(['prodi'])->latest()->first();
-        // menyimpan data login dosen
-        $this->dosenLogin->store($data_req);
-
-        return new CrudResource('success', 'Data Berhasil Disimpan', $data);
     }
 
     /**
@@ -145,27 +158,35 @@ class DosenController extends Controller
         if ($validate) {
             return $validate;
         }
-
-        $data = Dosen::findOrFail($id);
-        // find file foto
-        $foto = $data->foto;
-        // export foto
-        if ($request->hasFile('foto')) {
-            // remove file foto jika ada
-            if ($foto) {
-                File::delete($foto);
+        DB::beginTransaction();
+        try {
+            $data = Dosen::findOrFail($id);
+            // find file foto
+            $foto = $data->foto;
+            // export foto
+            if ($request->hasFile('foto')) {
+                // remove file foto jika ada
+                if ($foto) {
+                    File::delete($foto);
+                }
+                $foto = $this->imgController->addImage('foto_dosen', $data_req['foto']);
+                $data_req['foto'] = "storage/$foto";
+            } else {
+                $data_req['foto'] = $foto;
             }
-            $foto = $this->imgController->addImage('foto_dosen', $data_req['foto']);
-            $data_req['foto'] = "storage/$foto";
-        } else {
-            $data_req['foto'] = $foto;
+            $data->update($data_req);
+            $data = Dosen::find($id);
+            return new CrudResource('success', 'Data Berhasil Diubah', $data);
+        } catch (\Throwable $th) {
+            // jika terdapat kesalahan
+            DB::rollback();
+            $message = [
+                'judul' => 'Gagal',
+                'type' => 'error',
+                'message' => $th->getMessage(),
+            ];
+            return response()->json($message, 400);
         }
-
-        $data->update($data_req);
-
-        $data = Dosen::find($id);
-
-        return new CrudResource('success', 'Data Berhasil Diubah', $data);
     }
 
     /**
