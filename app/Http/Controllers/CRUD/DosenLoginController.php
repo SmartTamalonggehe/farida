@@ -60,8 +60,10 @@ class DosenLoginController extends Controller
                 $index = rand(0, strlen($characters) - 1);
                 $password .= $characters[$index];
             }
-            // membuang karakter setelah , dan .
-            $remove_koma = str_replace(['.', ','], '', $data_req['nama']);
+            // Membagi string berdasarkan tanda koma atau titik
+            $array_teks = preg_split('/[,.]/', $data_req['nama'], -1, PREG_SPLIT_NO_EMPTY);
+            // Mengambil elemen pertama dari array hasilnya
+            $remove_koma = reset($array_teks);
             $slug = Str::slug($remove_koma, '_'); // Membuat slug dari nama (misalnya: john-doe)
             $email = Str::finish($slug, '@fstuogp.com'); // Menambahkan "@fstuogp.com" di belakang slug
             // input data user
