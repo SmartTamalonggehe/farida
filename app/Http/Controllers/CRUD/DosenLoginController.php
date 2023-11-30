@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CrudResource;
+use App\Models\UserToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -145,11 +146,27 @@ class DosenLoginController extends Controller
         if (!$data) {
             return new CrudResource('error', 'Data Tidak Ditemukan', $data);
         }
-        // delete data user
-        User::destroy($id);
-        // delete data
-        $data->delete();
+        DB::transaction();
+        try {
+            // delete user token
+            UserToken::where('user_id', $id)->delete();
+            // delete data user
+            User::destroy($id);
 
-        return new CrudResource('success', 'Data Berhasil Dihapus', $data);
+            // delete data
+            $data->delete();
+
+            DB::commit();
+
+            return new CrudResource('success', 'Data Berhasil Dihapus', $data);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            $message = [
+                'judul' => 'Gagal',
+                'type' => 'error',
+                'message' => $th->getMessage(),
+            ];
+            return response()->json($message, 400);
+        }
     }
 }
