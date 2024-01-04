@@ -20,7 +20,7 @@ class BeritaAcaraController extends Controller
             'BA' => $beritaAcara,
             'data' => $data
         ]);
-        return $pdf->download('berita acara.pdf');
+        return $pdf->stream('berita acara.pdf');
         return view('cetak.beritaAcara', [
             'BA' => $beritaAcara,
             'data' => $data

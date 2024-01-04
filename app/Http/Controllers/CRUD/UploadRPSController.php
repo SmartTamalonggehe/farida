@@ -116,10 +116,19 @@ class UploadRPSController extends Controller
      * @return \Illuminate\Http\Response
      */
     // untuk dosen
-    public function show($id)
+    public function show($id, Request $request)
     {
+        $semester = $request->semester;
+        $tahun = $request->tahun;
         $jadwal_id = Jadwal::where('dosen_id', $id)->pluck('id');
-        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])->whereIn('jadwal_id', $jadwal_id)->get();
+        $data = UploadRps::with(['jadwal.matkul', 'jadwal.ruangan'])
+            ->whereHas('jadwal', function ($query) use ($tahun, $semester) {
+                $query->where([
+                    ['semester', $semester],
+                    ['tahun', $tahun],
+                ]);
+            })
+            ->whereIn('jadwal_id', $jadwal_id)->get();
         return new CrudResource('success', 'Data UploadRps', $data);
     }
 

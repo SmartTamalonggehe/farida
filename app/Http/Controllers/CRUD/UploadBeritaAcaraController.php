@@ -54,14 +54,21 @@ class UploadBeritaAcaraController extends Controller
     {
         $search = $request->search;
         $dosen_id = $request->dosen_id;
+        $semester = $request->semester;
+        $tahun = $request->tahun;
         $data = UploadBeritaAcara::with(['beritaAcara.jadwal.matkul', 'beritaAcara.jadwal.ruangan', 'beritaAcara.jadwal.prodi', 'beritaAcara.jadwal.dosen'])
-            ->whereHas('beritaAcara.jadwal', function ($query) use ($search, $dosen_id) {
-                $query->where('dosen_id', "like", "%$dosen_id%")
-                    ->where('hari', 'like', "%$search%")
-                    ->orWhereHas('matkul', function ($matkul) use ($search) {
-                        $matkul->where('nama', 'like', "%$search%")
-                            ->orWhere('singkat', 'like', "%$search%");
-                    });
+            ->whereHas('beritaAcara.jadwal', function ($query) use ($search, $dosen_id, $tahun, $semester) {
+                $query->where([
+                    ['dosen_id', "like", "%$dosen_id%"],
+                    ['tahun', $tahun],
+                    ['semester', $semester]
+                ])->where(function ($query) use ($search) {
+                    $query->where('hari', 'like', "%$search%")
+                        ->orWhereHas('matkul', function ($matkul) use ($search) {
+                            $matkul->where('nama', 'like', "%$search%")
+                                ->orWhere('singkat', 'like', "%$search%");
+                        });
+                });
             })
             ->paginate(10);
         return new CrudResource('success', 'Data UploadBeritaAcara', $data);

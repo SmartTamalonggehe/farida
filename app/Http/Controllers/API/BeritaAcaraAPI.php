@@ -20,13 +20,7 @@ class BeritaAcaraAPI extends Controller
             ->whereHas('jadwal', function ($query) use ($search, $dosen_id, $semester, $tahun, $prodi_id) {
                 $query->where('dosen_id', "like", "%$dosen_id%")
                     ->where('semester', $semester)
-                    ->where('tahun', $tahun)
-                    ->where('prodi_id', "like", "%$prodi_id%")
-                    ->orWhere('hari', 'like', "%$search%")
-                    ->orWhereHas('matkul', function ($matkul) use ($search) {
-                        $matkul->where('nama', 'like', "%$search%")
-                            ->orWhere('singkat', 'like', "%$search%");
-                    });
+                    ->where('tahun', $tahun);
             })
             ->get();
         return new CrudResource('success', 'Data BeritaAcara', $data);

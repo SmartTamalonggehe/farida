@@ -6,6 +6,7 @@
 {{-- use carbon --}}
 @php
     use Carbon\Carbon;
+    $prodi_id = $BA->jadwal->prodi->id;
 @endphp
 
 <body>
@@ -78,6 +79,29 @@
             @endforeach
         </tbody>
     </table>
+    <div style="width: 600px; margin: 5rem auto">
+        <h3 class="text-center">Mengetahui</h3>
+        <div class="mt-4">
+            {{-- ttd dekan --}}
+            <div class="float-left">
+                <p class="text-center" style="margin-bottom: 50px">Dekan</p>
+                <p>Fegie Y Wattimena, ST., M,Kom</p>
+            </div>
+            <div class="float-right">
+                <p class="text-center" style="margin-bottom: 50px">Ketua Prodi</p>
+                {{-- 1 = Axelon Samuel Renyaan, S.SI., MT --}}
+                {{-- 2 = Inggrid Nortalia Kailola, M.Si	 --}}
+                {{-- 3 = Doodle Dandy Waromi, S.T., M.T --}}
+                @if ($prodi_id == 1)
+                    <p>Axelon Samuel Renyaan, S.SI., MT</p>
+                @elseif ($prodi_id == 2)
+                    <p>Inggrid Nortalia Kailola, M.Si</p>
+                @else
+                    <p>Doodle Dandy Waromi, S.T., M.T</p>
+                @endif
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

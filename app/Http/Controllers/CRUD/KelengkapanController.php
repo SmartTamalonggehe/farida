@@ -2,24 +2,14 @@
 
 namespace App\Http\Controllers\CRUD;
 
+use App\Models\Kelengkapan;
 use Illuminate\Http\Request;
-use App\Models\DetBeritaAcara;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CrudResource;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\TOOLS\ImgToolsController;
-use App\Models\BeritaAcara;
 
-class DetBeritaAcaraController extends Controller
+class KelengkapanController extends Controller
 {
-    public $imgController;
-
-    public function __construct()
-    {
-        // memanggil controller image
-        $this->imgController = new ImgToolsController();
-    }
     protected function spartaValidation($request, $id = "")
     {
         $required = "";
@@ -27,11 +17,12 @@ class DetBeritaAcaraController extends Controller
             $required = "required";
         }
         $rules = [
-            'berita_acara_id' => 'required',
+            'nama' => 'required|unique:kelengkapan,nama,' . $id,
         ];
 
         $messages = [
-            'berita_acara_id.required' => 'Berita acara harus diisi.',
+            'nama.required' => 'Nama harus diisi.',
+            'nama.unique' => 'Nama Kelengkapan sudah ada.',
         ];
         $validator = Validator::make($request, $rules, $messages);
 
@@ -52,14 +43,18 @@ class DetBeritaAcaraController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
-        $berita_acara_id = $request->berita_acara_id;
-        $data = DetBeritaAcara::where([
-            ['berita_acara_id', $berita_acara_id],
-            ['materi', 'like', "%$search%"],
-        ])
-            ->orderBy('tgl', 'desc')
-            ->paginate(10);
-        return new CrudResource('success', 'Data DetBeritaAcara', $data);
+        $limit = $request->limit;
+        $data = Kelengkapan::with('jadwal')->where(function ($query) use ($search) {
+            $query->where('nama', 'like', "%$search%")
+                ->orWhereHas('prodi', function ($prodi) use ($search) {
+                    $prodi->where('nama', 'like', "%$search%");
+                });
+        })
+            ->orderBy('prodi_id', 'asc')
+            ->orderBy('semester', 'asc')
+            ->orderBy('nama', 'asc')
+            ->paginate($limit);
+        return new CrudResource('success', 'Data Kelengkapan', $data);
     }
     /**
      * Show the form for creating a new resource.
@@ -85,14 +80,9 @@ class DetBeritaAcaraController extends Controller
         if ($validate) {
             return $validate;
         }
-        // export foto
-        if ($request->hasFile('foto')) {
-            $foto = $this->imgController->addImage('foto_detBeritaAcara', $data_req['foto']);
-            $data_req['foto'] = "storage/$foto";
-        }
+        Kelengkapan::create($data_req);
 
-        DetBeritaAcara::create($data_req);
-        $data = DetBeritaAcara::latest()->first();
+        $data = Kelengkapan::with('prodi')->latest()->first();
 
         return new CrudResource('success', 'Data Berhasil Disimpan', $data);
     }
@@ -105,10 +95,7 @@ class DetBeritaAcaraController extends Controller
      */
     public function show($id)
     {
-        $data = BeritaAcara::with(['jadwal.matkul', "jadwal.dosen", "jadwal.ruangan", "jadwal.prodi"])
-            ->findOrFail($id);
-
-        return new CrudResource('success', 'Data Berhasil Ditemukan', $data);
+        //
     }
 
     /**
@@ -132,32 +119,15 @@ class DetBeritaAcaraController extends Controller
     public function update(Request $request, $id)
     {
         $data_req = $request->all();
-        // remove _method from data_req
-        unset($data_req['_method']);
         // return $data_req;
-        $validate = $this->spartaValidation($data_req);
+        $validate = $this->spartaValidation($data_req, $id);
         if ($validate) {
             return $validate;
         }
 
-        $data = DetBeritaAcara::findOrFail($id);
-        // find file foto
-        $foto = $data->foto;
-        // export foto
-        if ($request->hasFile('foto')) {
-            // remove file foto jika ada
-            if ($foto) {
-                File::delete($foto);
-            }
-            $foto = $this->imgController->addImage('foto_detBeritaAcara', $data_req['foto']);
-            $data_req['foto'] = "storage/$foto";
-        } else {
-            $data_req['foto'] = $foto;
-        }
+        Kelengkapan::find($id)->update($data_req);
 
-        $data->update($data_req);
-
-        $data = DetBeritaAcara::find($id);
+        $data = Kelengkapan::with('prodi')->find($id);
 
         return new CrudResource('success', 'Data Berhasil Diubah', $data);
     }
@@ -170,13 +140,7 @@ class DetBeritaAcaraController extends Controller
      */
     public function destroy($id)
     {
-        // delete data detBeritaAcara
-        $data = DetBeritaAcara::findOrFail($id);
-        $foto = $data->foto;
-        // remove foto foto
-        if ($foto) {
-            File::delete($foto);
-        }
+        $data = Kelengkapan::findOrFail($id);
         // delete data
         $data->delete();
 

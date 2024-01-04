@@ -125,5 +125,9 @@
         .hal-kwitansi {
             margin-left: 400px;
         }
+
+        .border {
+            border: 1px solid #000;
+        }
     </style>
 </head>
