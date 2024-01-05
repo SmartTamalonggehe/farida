@@ -8,6 +8,7 @@ use App\Http\Controllers\API\JadwalAPI;
 use App\Http\Controllers\API\MatkulAPI;
 use App\Http\Controllers\API\RuanganAPI;
 use App\Http\Controllers\API\BeritaAcaraAPI;
+use App\Http\Controllers\API\KelengkapanAPI;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,4 +49,8 @@ Route::prefix('jadwal')->group(function () {
 });
 Route::prefix('berita-acara')->group(function () {
     Route::get('/by-dosen', [BeritaAcaraAPI::class, 'byDosen']);
+});
+
+Route::prefix('kelengkapan')->group(function () {
+    Route::get('/', [KelengkapanAPI::class, 'index']);
 });

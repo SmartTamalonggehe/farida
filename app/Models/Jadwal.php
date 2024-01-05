@@ -36,6 +36,16 @@ class Jadwal extends Model
         return $this->hasOne(UploadRps::class, 'jadwal_id', 'id');
     }
 
+    function uploadNilai()
+    {
+        return $this->hasOne(UploadNilai::class, 'jadwal_id', 'id');
+    }
+
+    function uploadAbsen()
+    {
+        return $this->hasOne(UploadAbsen::class, 'jadwal_id', 'id');
+    }
+
     function beritaAcara()
     {
         return $this->hasOne(BeritaAcara::class, 'jadwal_id', 'id');

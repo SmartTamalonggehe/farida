@@ -15,4 +15,9 @@ class BeritaAcara extends Model
     {
         return $this->hasOne(Jadwal::class, 'id', 'jadwal_id');
     }
+
+    function uloadBeritaAcara()
+    {
+        return $this->hasOne(UploadBeritaAcara::class, 'berita_acara_id', 'id');
+    }
 }
